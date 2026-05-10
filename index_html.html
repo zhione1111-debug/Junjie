@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CubeAI — AI Agent 智能交互平台 | Dev by Junjie Zhao</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#020b18;
+      --bg2:#041022;
+      --bg3:#061530;
+      --accent:#00f5ff;
+      --accent2:#ff006e;
+      --accent3:#7b2fff;
+      --gold:#ffd700;
+      --text:#d8f0ff;
+      --muted:#6a9ab8;
+      --border:rgba(0,245,255,0.15);
+    }
+    html{scroll-behavior:smooth}
+    body{
+      background:var(--bg);
+      color:var(--text);
+      font-family:'Rajdhani',sans-serif;
+      overflow-x:hidden;
+      line-height:1.6;
+      font-size:17px;
+    }
+
+    /* FUTURISTIC GRADIENT BACKGROUND */
+    body::before{
+      content:'';
+      position:fixed;
+      inset:0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(0,100,255,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(123,47,255,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(0,245,255,0.05) 0%, transparent 70%),
+        linear-gradient(145deg, #020b18 0%, #030e22 40%, #05122a 70%, #020b18 100%);
+      z-index:-2;
+      pointer-events:none;
+    }
+
+    /* Animated aurora lines in background */
+    body::after{
+      content:'';
+      position:fixed;
+      inset:0;
+      background:
+        repeating-linear-gradient(
+          105deg,
+          transparent 0px,
+          transparent 80px,
+          rgba(0,245,255,0.018) 80px,
+          rgba(0,245,255,0.018) 81px
+        ),
+        repeating-linear-gradient(
+          15deg,
+          transparent 0px,
+          transparent 120px,
+          rgba(123,47,255,0.012) 120px,
+          rgba(123,47,255,0.012) 121px
+        );
+      z-index:-1;
+      pointer-events:none;
+    }
+
+    /* CANVAS */
+    #hero-canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none}
+
+    /* HERO */
+    .hero-section{position:relative;height:100vh;min-height:640px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .hero-bg{
+      position:absolute;inset:0;
+      background:
+        radial-gradient(ellipse 70% 60% at 70% 50%,rgba(0,80,200,0.12) 0%,transparent 65%),
+        radial-gradient(ellipse 50% 50% at 20% 80%,rgba(0,245,255,0.07) 0%,transparent 55%),
+        radial-gradient(ellipse 60% 40% at 80% 20%,rgba(123,47,255,0.10) 0%,transparent 60%);
+      z-index:0;
+    }
+    .grid-lines{
+      position:absolute;inset:0;z-index:0;
+      opacity:0.06;
+      background-image:
+        linear-gradient(rgba(0,245,255,1) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(0,245,255,1) 1px,transparent 1px);
+      background-size:70px 70px;
+    }
+    .hero-content{position:relative;z-index:10;text-align:center;padding:0 24px;animation:fadeUp 1.2s ease 0.5s both}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+    .dev-credit{font-size:13px;color:var(--accent);letter-spacing:4px;text-transform:uppercase;margin-bottom:22px;opacity:0.85;font-family:'Share Tech Mono',monospace}
+    .dev-credit span{color:var(--gold)}
+    .hero-label{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(0,245,255,0.35);border-radius:2px;padding:6px 20px;font-size:13px;color:var(--accent);letter-spacing:3px;text-transform:uppercase;margin-bottom:28px;font-family:'Share Tech Mono',monospace;background:rgba(0,245,255,0.04)}
+    .label-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:blink 1.5s infinite;box-shadow:0 0 8px var(--accent)}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+    h1.hero-title{font-family:'Orbitron',monospace;font-size:clamp(34px,6vw,72px);font-weight:900;line-height:1.05;margin-bottom:8px;letter-spacing:-1px}
+    .title-line1{display:block;color:var(--text);text-shadow:0 0 40px rgba(0,200,255,0.2)}
+    .title-line2{display:block;background:linear-gradient(90deg,var(--accent),var(--accent3),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 30px rgba(0,245,255,0.4))}
+    .hero-sub{color:#8ab8d8;font-size:19px;max-width:580px;margin:22px auto 40px;font-weight:400;line-height:1.85}
+    .hero-sub em{color:var(--accent);font-style:normal;font-weight:700}
+    .hero-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+    .btn-glow{background:linear-gradient(135deg,rgba(0,245,255,0.18),rgba(123,47,255,0.18));border:1px solid var(--accent);color:var(--accent);padding:15px 36px;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:2px;cursor:pointer;border-radius:2px;transition:all 0.3s;text-transform:uppercase;text-decoration:none;display:inline-block}
+    .btn-glow:hover{background:var(--accent);color:#000;box-shadow:0 0 40px rgba(0,245,255,0.5)}
+    .btn-outline{background:transparent;border:1px solid rgba(255,255,255,0.18);color:var(--text);padding:15px 36px;font-family:'Orbitron',monospace;font-size:13px;font-weight:400;letter-spacing:2px;cursor:pointer;border-radius:2px;transition:all 0.3s;text-transform:uppercase;text-decoration:none;display:inline-block}
+    .btn-outline:hover{border-color:var(--accent3);color:var(--accent3)}
+    .scroll-hint{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);z-index:10;display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--muted);font-size:12px;letter-spacing:3px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+    .scroll-line{width:1px;height:44px;background:linear-gradient(to bottom,var(--accent),transparent);animation:scrollAnim 2s infinite}
+    @keyframes scrollAnim{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+    /* NAV */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:20px 44px;background:rgba(2,11,24,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+    .nav-left{display:flex;flex-direction:column;gap:2px}
+    .nav-logo{font-family:'Orbitron',monospace;font-size:18px;font-weight:900;color:var(--accent);letter-spacing:3px}
+    .nav-logo span{color:var(--accent2)}
+    .nav-dev{font-size:11px;color:var(--muted);letter-spacing:1px;font-family:'Share Tech Mono',monospace}
+    .nav-dev b{color:var(--gold);font-weight:600}
+    .nav-links{display:flex;gap:36px;list-style:none}
+    .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;letter-spacing:2px;text-transform:uppercase;transition:color 0.2s;font-weight:500}
+    .nav-links a:hover{color:var(--accent)}
+    .nav-cta{background:transparent;border:1px solid var(--accent2);color:var(--accent2);padding:9px 22px;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;border-radius:2px;transition:all 0.2s;text-transform:uppercase}
+    .nav-cta:hover{background:var(--accent2);color:#fff}
+
+    /* SECTIONS */
+    .section{padding:110px 40px;max-width:1060px;margin:0 auto}
+    .section-label{font-size:12px;color:var(--accent);letter-spacing:4px;text-transform:uppercase;margin-bottom:12px;font-weight:600;display:flex;align-items:center;gap:10px;font-family:'Share Tech Mono',monospace}
+    .section-label::before{content:'';display:inline-block;width:24px;height:1px;background:var(--accent)}
+    .section-title{font-family:'Orbitron',monospace;font-size:clamp(26px,4vw,42px);font-weight:900;margin-bottom:16px;color:var(--text)}
+    .section-sub{color:var(--muted);font-size:17px;max-width:540px;line-height:1.8}
+
+    /* STATS */
+    .stats-wrap{max-width:1060px;margin:0 auto;padding:0 40px}
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-top:90px}
+    .stat-cell{background:var(--bg2);padding:36px 20px;text-align:center;position:relative;overflow:hidden}
+    .stat-cell::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0.5}
+    .stat-val{font-family:'Orbitron',monospace;font-size:38px;font-weight:900;background:linear-gradient(90deg,var(--accent),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+    .stat-lbl{color:var(--muted);font-size:13px;letter-spacing:2px;text-transform:uppercase;font-family:'Share Tech Mono',monospace}
+
+    /* PAIN GRID */
+    .pain-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-top:64px}
+    .pain-card{background:var(--bg2);padding:40px;position:relative;overflow:hidden;transition:background 0.3s}
+    .pain-card:hover{background:rgba(0,245,255,0.04)}
+    .pain-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:linear-gradient(to bottom,var(--accent),transparent)}
+    .pain-num{font-family:'Orbitron',monospace;font-size:48px;font-weight:900;color:rgba(0,245,255,0.07);position:absolute;top:18px;right:22px;line-height:1}
+    .pain-icon{font-size:32px;margin-bottom:16px}
+    .pain-title{font-family:'Orbitron',monospace;font-size:15px;font-weight:700;color:var(--accent);margin-bottom:12px;letter-spacing:1px}
+    .pain-desc{color:#7a9db8;font-size:16px;line-height:1.8}
+
+    /* FEATURES */
+    .features-row{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:64px}
+    .feat-card{border:1px solid var(--border);padding:32px;border-radius:4px;position:relative;overflow:hidden;transition:all 0.3s;cursor:default;background:rgba(255,255,255,0.01)}
+    .feat-card:hover{border-color:rgba(0,245,255,0.45);transform:translateY(-7px);box-shadow:0 24px 48px rgba(0,0,0,0.5),0 0 24px rgba(0,245,255,0.06)}
+    .feat-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,245,255,0.04),transparent);opacity:0;transition:opacity 0.3s}
+    .feat-card:hover::after{opacity:1}
+    .feat-num{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--accent);letter-spacing:2px;margin-bottom:18px;opacity:0.7}
+    .feat-title{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;letter-spacing:0.5px}
+    .feat-desc{color:#7a9db8;font-size:15px;line-height:1.8}
+    .feat-tag{display:inline-block;margin-top:16px;font-size:11px;color:var(--accent3);letter-spacing:2px;text-transform:uppercase;border:1px solid rgba(123,47,255,0.35);padding:3px 10px;border-radius:2px;font-family:'Share Tech Mono',monospace}
+
+    /* DATA SHOWCASE */
+    .data-showcase{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center;margin-top:64px}
+    .data-left h2{font-family:'Orbitron',monospace;font-size:clamp(22px,3vw,32px);font-weight:900;margin:18px 0;color:var(--text)}
+    .data-left p{color:#7a9db8;font-size:16px;line-height:1.85;margin-bottom:26px}
+    .check-list{list-style:none;display:flex;flex-direction:column;gap:12px}
+    .check-list li{display:flex;align-items:flex-start;gap:12px;font-size:16px;color:var(--text)}
+    .ck{color:var(--accent);font-size:14px;margin-top:2px;flex-shrink:0}
+    .data-right{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:28px}
+    .dr-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+    .dr-title{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--accent);letter-spacing:2px}
+    .dr-live{display:flex;align-items:center;gap:6px;font-size:11px;color:#00ff88;letter-spacing:2px;font-family:'Share Tech Mono',monospace}
+    .live-dot{width:7px;height:7px;background:#00ff88;border-radius:50%;animation:blink 1.2s infinite;box-shadow:0 0 8px #00ff88}
+    .chart-bars{display:flex;align-items:flex-end;gap:7px;height:90px;margin-bottom:20px}
+    .cb{flex:1;border-radius:2px 2px 0 0;background:rgba(0,245,255,0.15);transition:height 0.5s ease}
+    .cb.hi{background:linear-gradient(to top,var(--accent),var(--accent3))}
+    .dr-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .drm{background:rgba(0,245,255,0.04);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center}
+    .drm-val{font-family:'Orbitron',monospace;font-size:18px;font-weight:700;color:var(--accent)}
+    .drm-lbl{font-size:11px;color:var(--muted);letter-spacing:1px;margin-top:3px;font-family:'Share Tech Mono',monospace}
+
+    /* MODAL */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,8,20,0.75);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+    .modal-overlay.active{display:flex}
+    .modal{background:var(--bg2);border:1px solid rgba(0,245,255,0.3);border-radius:8px;padding:44px;width:100%;max-width:500px;position:relative;animation:modalIn 0.3s ease}
+    @keyframes modalIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+    .modal-close{position:absolute;top:18px;right:18px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:22px;transition:color 0.2s}
+    .modal-close:hover{color:var(--text)}
+    .modal h3{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;color:var(--accent);margin-bottom:10px}
+    .modal p{color:var(--muted);font-size:15px;margin-bottom:28px}
+    .form-group{margin-bottom:18px}
+    .form-group label{display:block;font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;font-family:'Share Tech Mono',monospace}
+    .form-group input,.form-group select,.form-group textarea{width:100%;background:rgba(0,245,255,0.04);border:1px solid var(--border);border-radius:4px;padding:12px 16px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:rgba(0,245,255,0.55)}
+    .form-group textarea{resize:vertical;min-height:90px}
+    .form-group select option{background:var(--bg2)}
+    .btn-submit{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent3));border:none;color:#000;padding:15px;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:2px;cursor:pointer;border-radius:4px;transition:opacity 0.2s;text-transform:uppercase;margin-top:10px}
+    .btn-submit:hover{opacity:0.85}
+    .success-msg{display:none;text-align:center;padding:24px 0}
+    .success-msg .check-big{font-size:52px;margin-bottom:14px}
+    .success-msg h4{font-family:'Orbitron',monospace;color:var(--accent);font-size:18px;margin-bottom:10px}
+    .success-msg p{color:var(--muted);font-size:15px}
+
+    /* CTA */
+    .cta-wrap{max-width:1060px;margin:0 auto;padding:0 40px 100px}
+    .cta-block{background:linear-gradient(135deg,rgba(0,245,255,0.06),rgba(123,47,255,0.10));border:1px solid rgba(0,245,255,0.2);border-radius:8px;padding:80px 44px;text-align:center;position:relative;overflow:hidden}
+    .cta-block::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+    .cta-block h2{font-family:'Orbitron',monospace;font-size:clamp(26px,4.5vw,46px);font-weight:900;margin-bottom:16px}
+    .cta-block p{color:var(--muted);font-size:18px;margin-bottom:40px}
+    .cta-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+
+    /* FOOTER */
+    footer{border-top:1px solid var(--border);padding:32px 44px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;letter-spacing:0.5px;font-family:'Share Tech Mono',monospace}
+    .foot-dev{color:var(--gold);font-weight:600}
+    .foot-links{display:flex;gap:24px}
+    .foot-links a{color:var(--muted);text-decoration:none;transition:color 0.2s;font-size:13px}
+    .foot-links a:hover{color:var(--accent)}
+
+    @media(max-width:768px){
+      nav{padding:14px 20px}
+      .nav-links{display:none}
+      .section{padding:70px 20px}
+      .stats-wrap{padding:0 20px}
+      .pain-grid{grid-template-columns:1fr}
+      .features-row{grid-template-columns:1fr 1fr}
+      .data-showcase{grid-template-columns:1fr}
+      .stats-row{grid-template-columns:repeat(2,1fr)}
+      footer{flex-direction:column;gap:16px;text-align:center;padding:24px 20px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <div class="nav-logo">CUBE<span>AI</span></div>
+    <div class="nav-dev">Dev by <b>Junjie Zhao</b></div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#features">产品</a></li>
+    <li><a href="#modules">功能</a></li>
+    <li><a href="#data">数据</a></li>
+    <li><a href="#contact">联系</a></li>
+  </ul>
+  <button class="nav-cta" onclick="openModal()">预约演示</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero-section">
+  <div class="hero-bg"></div>
+  <div class="grid-lines"></div>
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <div class="dev-credit">Developed by <span>Junjie Zhao</span></div>
+    <div class="hero-label"><span class="label-dot"></span>AI Agent 智能平台</div>
+    <h1 class="hero-title">
+      <span class="title-line1">解放你的团队</span>
+      <span class="title-line2">AI驱动未来</span>
+    </h1>
+    <p class="hero-sub">自动化处理<em>繁杂重复</em>的劳动力消耗，实时行业数据洞察，精准挖掘客户痛点——让企业以<em>10倍效率</em>高速运转。</p>
+    <div class="hero-btns">
+      <a href="#" class="btn-glow" onclick="openModal();return false;">立即体验</a>
+      <a href="#features" class="btn-outline">查看功能</a>
+    </div>
+  </div>
+  <div class="scroll-hint"><div class="scroll-line"></div>向下探索</div>
+</section>
+
+<!-- STATS -->
+<div class="stats-wrap">
+  <div class="stats-row">
+    <div class="stat-cell"><div class="stat-val">98%</div><div class="stat-lbl">任务自动化率</div></div>
+    <div class="stat-cell"><div class="stat-val">10×</div><div class="stat-lbl">团队效率提升</div></div>
+    <div class="stat-cell"><div class="stat-val">500+</div><div class="stat-lbl">企业客户</div></div>
+    <div class="stat-cell"><div class="stat-val">24/7</div><div class="stat-lbl">实时数据监控</div></div>
+  </div>
+</div>
+
+<!-- PAIN POINTS -->
+<section class="section" id="features">
+  <div class="section-label">核心价值</div>
+  <div class="section-title">企业痛点，精准击破</div>
+  <p class="section-sub">CubeAI Agent 深度理解业务流程，将繁琐工作交给 AI，人才聚焦高价值决策。</p>
+  <div class="pain-grid">
+    <div class="pain-card">
+      <div class="pain-num">01</div>
+      <div class="pain-icon">⚡</div>
+      <div class="pain-title">重复劳动自动化</div>
+      <div class="pain-desc">AI Agent 全天候处理数据录入、报表生成、邮件回复等重复性工作，释放人力专注创造性任务。</div>
+    </div>
+    <div class="pain-card">
+      <div class="pain-num">02</div>
+      <div class="pain-icon">📊</div>
+      <div class="pain-title">行业实时数据报表</div>
+      <div class="pain-desc">接入行业数据源，自动生成可视化报表，决策者随时掌握市场动态，抢占先机。</div>
+    </div>
+    <div class="pain-card">
+      <div class="pain-num">03</div>
+      <div class="pain-icon">🎯</div>
+      <div class="pain-title">客户痛点精准挖掘</div>
+      <div class="pain-desc">AI 分析用户行为与反馈，自动识别高价值痛点，为产品迭代和营销策略提供数据支撑。</div>
+    </div>
+    <div class="pain-card">
+      <div class="pain-num">04</div>
+      <div class="pain-icon">🚀</div>
+      <div class="pain-title">企业高效运行</div>
+      <div class="pain-desc">跨部门工作流自动协同，减少沟通成本，项目推进透明化，企业运营效率大幅跃升。</div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULES -->
+<section class="section" id="modules" style="padding-top:0">
+  <div class="section-label">产品能力</div>
+  <div class="section-title">六大核心模块</div>
+  <p class="section-sub">从感知到执行，CubeAI 构建完整的智能体工作闭环。</p>
+  <div class="features-row">
+    <div class="feat-card">
+      <div class="feat-num">MOD — 01</div>
+      <div class="feat-title">智能任务调度</div>
+      <div class="feat-desc">自然语言下达指令，AI 自动拆解任务、分配资源、追踪执行状态。</div>
+      <div class="feat-tag">Automation</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">MOD — 02</div>
+      <div class="feat-title">多模型协同</div>
+      <div class="feat-desc">灵活调用 GPT、Claude、本地模型，根据任务类型智能路由，成本最优。</div>
+      <div class="feat-tag">AI Routing</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">MOD — 03</div>
+      <div class="feat-title">实时数据引擎</div>
+      <div class="feat-desc">接入行业数据库、企业 ERP、CRM，实时抓取、清洗、可视化呈现。</div>
+      <div class="feat-tag">Data Intel</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">MOD — 04</div>
+      <div class="feat-title">客户洞察 AI</div>
+      <div class="feat-desc">分析用户全链路行为数据，自动生成痛点报告，驱动精准运营决策。</div>
+      <div class="feat-tag">Insights</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">MOD — 05</div>
+      <div class="feat-title">工作流集成</div>
+      <div class="feat-desc">无缝对接钉钉、飞书、Slack、Salesforce 等主流工具，零改造成本。</div>
+      <div class="feat-tag">Integration</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-num">MOD — 06</div>
+      <div class="feat-title">安全合规</div>
+      <div class="feat-desc">数据本地化部署可选，全程加密审计，满足金融、医疗等高合规场景。</div>
+      <div class="feat-tag">Security</div>
+    </div>
+  </div>
+</section>
+
+<!-- DATA -->
+<section class="section" id="data" style="padding-top:0">
+  <div class="data-showcase">
+    <div class="data-left">
+      <div class="section-label">数据洞察</div>
+      <h2>实时报表，决策零延迟</h2>
+      <p>CubeAI 数据引擎每秒处理百万级数据点，自动识别趋势、异常与商机，管理者无需等待——洞察随时就绪。</p>
+      <ul class="check-list">
+        <li><span class="ck">▶</span>行业竞品数据自动追踪对比</li>
+        <li><span class="ck">▶</span>销售漏斗实时可视化监控</li>
+        <li><span class="ck">▶</span>AI 预测下一周期业绩走势</li>
+        <li><span class="ck">▶</span>异常数据自动预警推送</li>
+      </ul>
+    </div>
+    <div class="data-right">
+      <div class="dr-header">
+        <div class="dr-title">实时数据面板</div>
+        <div class="dr-live"><span class="live-dot"></span>LIVE</div>
+      </div>
+      <div class="chart-bars" id="live-chart">
+        <div class="cb" style="height:45%"></div>
+        <div class="cb hi" style="height:72%"></div>
+        <div class="cb" style="height:38%"></div>
+        <div class="cb hi" style="height:88%"></div>
+        <div class="cb" style="height:55%"></div>
+        <div class="cb hi" style="height:95%"></div>
+        <div class="cb" style="height:62%"></div>
+        <div class="cb" style="height:48%"></div>
+        <div class="cb hi" style="height:80%"></div>
+        <div class="cb" style="height:35%"></div>
+      </div>
+      <div class="dr-metrics">
+        <div class="drm"><div class="drm-val">↑23%</div><div class="drm-lbl">转化率</div></div>
+        <div class="drm"><div class="drm-val">4.2s</div><div class="drm-lbl">响应时间</div></div>
+        <div class="drm"><div class="drm-val">98.7</div><div class="drm-lbl">健康指数</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-wrap" id="contact">
+  <div class="cta-block">
+    <h2>准备好了吗？</h2>
+    <p>加入 500+ 家企业，现在让 AI Agent 接管重复工作，释放你团队的真正潜力。</p>
+    <div class="cta-btns">
+      <a href="#" class="btn-glow" onclick="openModal();return false;">免费开始 14 天试用</a>
+      <a href="mailto:contact@cubeai.com" class="btn-outline">联系销售团队</a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div>© 2025 CubeAI Inc. · Developed by <span class="foot-dev">Junjie Zhao</span></div>
+  <div class="foot-links">
+    <a href="#">隐私政策</a>
+    <a href="#">服务条款</a>
+    <a href="#">文档</a>
+    <a href="#">关于我们</a>
+  </div>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modal-form-content">
+      <h3>预约产品演示</h3>
+      <p>填写以下信息，我们的团队将在 24 小时内与您联系。</p>
+      <div class="form-group">
+        <label>您的姓名</label>
+        <input type="text" id="f-name" placeholder="请输入姓名" />
+      </div>
+      <div class="form-group">
+        <label>公司名称</label>
+        <input type="text" id="f-company" placeholder="请输入公司名称" />
+      </div>
+      <div class="form-group">
+        <label>联系方式（手机 / 邮箱）</label>
+        <input type="text" id="f-contact" placeholder="请输入手机号或邮箱" />
+      </div>
+      <div class="form-group">
+        <label>您最感兴趣的功能</label>
+        <select id="f-interest">
+          <option value="">请选择...</option>
+          <option>重复劳动自动化</option>
+          <option>实时数据报表</option>
+          <option>客户痛点挖掘</option>
+          <option>工作流集成</option>
+          <option>全套解决方案</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>补充说明（可选）</label>
+        <textarea id="f-note" placeholder="简单描述您的业务场景..."></textarea>
+      </div>
+      <button class="btn-submit" onclick="submitForm()">提交预约 →</button>
+    </div>
+    <div class="success-msg" id="modal-success">
+      <div class="check-big">✅</div>
+      <h4>预约成功！</h4>
+      <p>感谢您的关注，我们的团队将在 24 小时内通过您提供的联系方式与您取得联系。</p>
+    </div>
+  </div>
+</div>
+
+<!-- THREE.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ==========================================
+// NEURAL NETWORK SPHERE
+// ==========================================
+const canvas = document.getElementById('hero-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x000000, 0);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
+camera.position.set(0, 0, 10);
+
+// --- NODE COLORS (cyan/purple/pink palette) ---
+const nodeColors = [0x00f5ff, 0x7b2fff, 0xff006e, 0x00ccff, 0xaa44ff];
+
+// --- CREATE SPHERE NODES ---
+const NODE_COUNT = 180;
+const SPHERE_RADIUS = 3.6;
+const nodes = [];
+const nodeGroup = new THREE.Group();
+
+// Fibonacci sphere distribution for even spread
+for (let i = 0; i < NODE_COUNT; i++) {
+  const phi = Math.acos(1 - 2 * (i + 0.5) / NODE_COUNT);
+  const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+
+  const x = SPHERE_RADIUS * Math.sin(phi) * Math.cos(theta);
+  const y = SPHERE_RADIUS * Math.sin(phi) * Math.sin(theta);
+  const z = SPHERE_RADIUS * Math.cos(phi);
+
+  const col = nodeColors[Math.floor(Math.random() * nodeColors.length)];
+  const size = Math.random() * 0.045 + 0.025;
+
+  const geo = new THREE.SphereGeometry(size, 8, 8);
+  const mat = new THREE.MeshBasicMaterial({
+    color: col,
+    transparent: true,
+    opacity: 0.85
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(x, y, z);
+
+  // Glow halo
+  const glowGeo = new THREE.SphereGeometry(size * 2.8, 8, 8);
+  const glowMat = new THREE.MeshBasicMaterial({
+    color: col,
+    transparent: true,
+    opacity: 0.12
+  });
+  const glow = new THREE.Mesh(glowGeo, glowMat);
+  mesh.add(glow);
+
+  nodeGroup.add(mesh);
+  nodes.push({ mesh, pos: new THREE.Vector3(x, y, z), color: col, phase: Math.random() * Math.PI * 2 });
+}
+
+// --- CREATE CONNECTIONS (edges) ---
+const CONNECTION_DISTANCE = 2.2;
+const linePositions = [];
+const lineColors = [];
+
+for (let i = 0; i < nodes.length; i++) {
+  for (let j = i + 1; j < nodes.length; j++) {
+    const dist = nodes[i].pos.distanceTo(nodes[j].pos);
+    if (dist < CONNECTION_DISTANCE) {
+      linePositions.push(
+        nodes[i].pos.x, nodes[i].pos.y, nodes[i].pos.z,
+        nodes[j].pos.x, nodes[j].pos.y, nodes[j].pos.z
+      );
+      // Fade color based on distance
+      const alpha = 1 - dist / CONNECTION_DISTANCE;
+      // Use cyan-purple blend
+      const r = 0.0 + alpha * 0.3;
+      const g = 0.6 * alpha;
+      const b = 1.0 * alpha;
+      lineColors.push(r, g, b, r * 0.4, g * 0.4, b * 0.4);
+    }
+  }
+}
+
+const lineGeo = new THREE.BufferGeometry();
+lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+lineGeo.setAttribute('color', new THREE.Float32BufferAttribute(lineColors, 3));
+const lineMat = new THREE.LineBasicMaterial({
+  vertexColors: true,
+  transparent: true,
+  opacity: 0.22,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false
+});
+const linesMesh = new THREE.LineSegments(lineGeo, lineMat);
+nodeGroup.add(linesMesh);
+
+// --- OUTER GLOW SPHERE (wiremesh shell) ---
+const shellGeo = new THREE.IcosahedronGeometry(SPHERE_RADIUS + 0.25, 3);
+const shellMat = new THREE.MeshBasicMaterial({
+  color: 0x00f5ff,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.04,
+  blending: THREE.AdditiveBlending
+});
+const shell = new THREE.Mesh(shellGeo, shellMat);
+nodeGroup.add(shell);
+
+// Second subtle shell
+const shell2Geo = new THREE.IcosahedronGeometry(SPHERE_RADIUS + 0.6, 2);
+const shell2Mat = new THREE.MeshBasicMaterial({
+  color: 0x7b2fff,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.025,
+  blending: THREE.AdditiveBlending
+});
+const shell2 = new THREE.Mesh(shell2Geo, shell2Mat);
+nodeGroup.add(shell2);
+
+// --- SIGNAL PULSES (animated particles moving along edges) ---
+const PULSE_COUNT = 28;
+const pulses = [];
+const edgeList = [];
+// Build edge list from line positions
+for (let i = 0; i < linePositions.length; i += 6) {
+  edgeList.push({
+    a: new THREE.Vector3(linePositions[i], linePositions[i+1], linePositions[i+2]),
+    b: new THREE.Vector3(linePositions[i+3], linePositions[i+4], linePositions[i+5])
+  });
+}
+
+for (let i = 0; i < PULSE_COUNT; i++) {
+  const geo = new THREE.SphereGeometry(0.04, 6, 6);
+  const col = nodeColors[Math.floor(Math.random() * nodeColors.length)];
+  const mat = new THREE.MeshBasicMaterial({
+    color: col,
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  const edgeIdx = Math.floor(Math.random() * edgeList.length);
+  pulses.push({ mesh, edgeIdx, t: Math.random(), speed: 0.004 + Math.random() * 0.008 });
+  nodeGroup.add(mesh);
+}
+
+scene.add(nodeGroup);
+
+// Position sphere to the right side of screen
+nodeGroup.position.set(3.8, 0, 0);
+
+// Resize handler
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+resize();
+window.addEventListener('resize', resize);
+
+// Mouse parallax
+let mouseX = 0, mouseY = 0;
+window.addEventListener('mousemove', e => {
+  mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+  mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+});
+
+let startTime = Date.now();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const elapsed = (Date.now() - startTime) / 1000;
+
+  // Fly-in animation
+  const flyDur = 1.8;
+  if (elapsed < flyDur) {
+    const t = 1 - Math.pow(1 - elapsed / flyDur, 3);
+    nodeGroup.position.x = 20 * (1 - t) + 3.8 * t;
+    nodeGroup.position.y = -8 * (1 - t) + 0 * t;
+    nodeGroup.scale.setScalar(t);
+  } else {
+    nodeGroup.position.x = 3.8;
+    nodeGroup.position.y = 0;
+    nodeGroup.scale.setScalar(1);
+  }
+
+  // Continuous rotation
+  nodeGroup.rotation.y += 0.003;
+  nodeGroup.rotation.x += 0.0012;
+
+  // Counter-rotate shells for layered effect
+  shell.rotation.y -= 0.004;
+  shell.rotation.x -= 0.002;
+  shell2.rotation.y += 0.005;
+  shell2.rotation.z += 0.003;
+
+  // Subtle mouse parallax
+  nodeGroup.rotation.y += mouseX * 0.0005;
+  nodeGroup.rotation.x += mouseY * 0.0005;
+
+  // Animate node pulses (breathing)
+  nodes.forEach((n, idx) => {
+    const pulse = 0.8 + 0.2 * Math.sin(elapsed * 1.5 + n.phase);
+    n.mesh.material.opacity = pulse * 0.85;
+  });
+
+  // Animate signal pulses
+  pulses.forEach(p => {
+    p.t += p.speed;
+    if (p.t > 1) {
+      p.t = 0;
+      p.edgeIdx = Math.floor(Math.random() * edgeList.length);
+    }
+    const edge = edgeList[p.edgeIdx];
+    p.mesh.position.lerpVectors(edge.a, edge.b, p.t);
+    // Fade at endpoints
+    const fade = Math.sin(p.t * Math.PI);
+    p.mesh.material.opacity = fade * 0.9;
+  });
+
+  // Animate line opacity (shimmer)
+  lineMat.opacity = 0.18 + 0.06 * Math.sin(elapsed * 0.8);
+
+  renderer.render(scene, camera);
+}
+animate();
+
+// --- LIVE CHART ---
+setInterval(() => {
+  const bars = document.querySelectorAll('#live-chart .cb');
+  bars.forEach(b => {
+    b.style.height = Math.floor(Math.random() * 70 + 25) + '%';
+  });
+}, 2200);
+
+// --- MODAL ---
+function openModal() {
+  document.getElementById('modal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+  document.body.style.overflow = '';
+  setTimeout(() => {
+    document.getElementById('modal-form-content').style.display = 'block';
+    document.getElementById('modal-success').style.display = 'none';
+  }, 300);
+}
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modal')) closeModal();
+}
+function submitForm() {
+  const name = document.getElementById('f-name').value.trim();
+  const contact = document.getElementById('f-contact').value.trim();
+  if (!name || !contact) {
+    alert('请填写姓名和联系方式');
+    return;
+  }
+  document.getElementById('modal-form-content').style.display = 'none';
+  document.getElementById('modal-success').style.display = 'block';
+}
+</script>
+</body>
+</html>
